@@ -1,0 +1,39 @@
+name: DICOM ➜ JPEG ➜ IIIF Manifest
+
+on:
+  push:
+    paths: ['**.dcm']          # DICOM 변경 시 자동 실행
+  workflow_dispatch:           # 필요 시 수동 실행 버튼 제공
+
+jobs:
+  build-iiif:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write          # auto-commit 권한
+
+    steps:
+    - uses: actions/checkout@v4          # 소스 체크아웃
+      with: { fetch-depth: 0 }
+
+    - uses: actions/setup-python@v4      # Python 3.12 설치
+      with: { python-version: '3.12' }   :contentReference[oaicite:0]{index=0}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pydicom pillow numpy biiif
+
+    - name: Convert DICOM to JPEG
+      run: python scripts/dicom2jpg.py
+
+    - name: Build IIIF Manifest
+      run: |
+        python scripts/build_manifest.py \
+          --images_dir images \
+          --output manifest.json \
+          --base_url "https://song-jung-il.github.io/Public_image"
+
+    - name: Commit & push
+      uses: stefanzweifel/git-auto-commit-action@v5
+      with:
+        commit_message: "auto: refresh JPEG & manifest"   :contentReference[oaicite:1]{index=1}
